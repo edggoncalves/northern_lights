@@ -20,45 +20,84 @@ def create_aurora_alert_email(
         Tuple of (plain_text_body, html_body)
     """
     # Create Rich console for rendering
-    console = Console(file=StringIO(), record=True, force_terminal=True)
+    console = Console(
+        file=StringIO(),
+        record=True,
+        force_terminal=True,
+        width=80
+    )
 
-    # Header
-    header = Text("Aurora Borealis Visibility Alert", style="bold cyan")
-    console.print(Panel(header, style="bright_green"))
+    # Header with emoji
+    console.print()
+    header = Text(
+        "🌌 Aurora Borealis Alert 🌌",
+        style="bold cyan",
+        justify="center"
+    )
+    console.print(
+        Panel(
+            header,
+            style="green",
+            border_style="green",
+            padding=(1, 2)
+        )
+    )
     console.print()
 
     # Main message
     console.print(
-        "[bold green]Great chance to see auroras tonight![/bold green]\n"
+        "[bold green]Great news! High visibility "
+        "auroras detected![/bold green]",
+        justify="center"
     )
+    console.print()
 
     # Create table for locations
     table = Table(
-        title="High Visibility Locations",
+        title="[bold]🎆 High Visibility Locations[/bold]",
         show_header=True,
-        header_style="bold magenta"
+        header_style="bold cyan",
+        border_style="blue",
+        title_style="bold",
+        show_lines=True
     )
-    table.add_column("Location", style="cyan", no_wrap=True)
-    table.add_column("Coordinates", style="yellow")
-    table.add_column("KP Index", style="bold green", justify="center")
+    table.add_column("📍 Location", style="cyan", no_wrap=False)
+    table.add_column("🗺️  Coordinates", style="dim", justify="center")
+    table.add_column(
+        "⚡ KP Index",
+        style="bold green",
+        justify="center"
+    )
 
     for loc, kp in high_visibility_locations:
-        coords = f"{loc['latitude']:.4f}, {loc['longitude']:.4f}"
+        coords = f"{loc['latitude']:.4f}°, {loc['longitude']:.4f}°"
         table.add_row(
             f"{loc['city']}, {loc['country']}",
             coords,
-            f"{kp}"
+            f"[bold]{kp}[/bold]"
         )
 
     console.print(table)
     console.print()
 
+    # Call to action
+    console.print(
+        Panel(
+            "[bold]Get outside and look up at the sky! "
+            "Tonight could be spectacular! ✨[/bold]",
+            style="blue",
+            border_style="blue"
+        )
+    )
+    console.print()
+
     # Footer
     console.print(
-        "[dim]This is an automated notification from "
-        "Northern Lights tracker.[/dim]"
+        "[dim italic]Automated notification from "
+        "Northern Lights Tracker[/dim italic]",
+        justify="center"
     )
-    console.print("[bold yellow]Get outside and look up! 🌌[/bold yellow]")
+    console.print()
 
     # Get HTML export
     html_body = console.export_html(inline_styles=True)
@@ -81,37 +120,74 @@ def create_test_email(
         Tuple of (plain_text_body, html_body)
     """
     # Create Rich console for rendering
-    console = Console(file=StringIO(), record=True, force_terminal=True)
+    console = Console(
+        file=StringIO(),
+        record=True,
+        force_terminal=True,
+        width=80
+    )
 
     # Header
-    header = Text("Northern Lights - Email Test", style="bold cyan")
-    console.print(Panel(header, style="bright_blue"))
+    console.print()
+    header = Text(
+        "Northern Lights Email Test",
+        style="bold cyan",
+        justify="center"
+    )
+    console.print(
+        Panel(
+            header,
+            style="blue",
+            border_style="blue",
+            padding=(1, 2)
+        )
+    )
     console.print()
 
     # Success message
     console.print(
-        "[bold green]✓ SMTP Configuration Test Successful![/bold green]\n"
+        "[bold green]✓ SMTP Configuration Successful![/bold green]",
+        justify="center"
     )
-
-    # Location info
-    console.print("[bold]Configured Locations:[/bold]")
-    for loc in locations:
-        console.print(
-            f"  • [cyan]{loc['city']}, {loc['country']}[/cyan] - "
-            f"[yellow]{loc['latitude']:.4f}, {loc['longitude']:.4f}[/yellow]"
-        )
-
     console.print()
+
+    # Location table
+    table = Table(
+        title="[bold]📍 Monitoring Locations[/bold]",
+        show_header=True,
+        header_style="bold cyan",
+        border_style="blue",
+        show_lines=True
+    )
+    table.add_column("City", style="cyan", no_wrap=False)
+    table.add_column("Country", style="cyan")
+    table.add_column("Coordinates", style="dim", justify="center")
+
+    for loc in locations:
+        coords = f"{loc['latitude']:.4f}°, {loc['longitude']:.4f}°"
+        table.add_row(loc['city'], loc['country'], coords)
+
+    console.print(table)
+    console.print()
+
+    # Info panel
     console.print(
-        "[green]You will receive aurora alerts when the KP index "
-        "reaches 5.0 or higher.[/green]"
+        Panel(
+            "You will receive alerts when aurora visibility is HIGH\n"
+            "(KP index ≥ 5.0) at any monitored location.",
+            title="[bold]ℹ️  Alert Settings[/bold]",
+            style="blue",
+            border_style="blue"
+        )
     )
     console.print()
 
     # Footer
     console.print(
-        "[dim]This is a test email from Northern Lights tracker.[/dim]"
+        "[dim italic]Test email from Northern Lights Tracker[/dim italic]",
+        justify="center"
     )
+    console.print()
 
     # Get HTML export
     html_body = console.export_html(inline_styles=True)
