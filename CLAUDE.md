@@ -174,7 +174,7 @@ To automatically check aurora visibility on a schedule (e.g., daily at 8 PM), se
 - `requests` - HTTP requests to Auroras.live API
 - `geopy` - Geocoding service (Nominatim)
 - `python-dotenv` - Load SMTP credentials from .env file
-- `rich` - Listed in pyproject.toml but not currently used (reserved for future formatting improvements)
+- `rich` - Simple email formatting with basic tables and colors
 
 ## Project Structure
 

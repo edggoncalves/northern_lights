@@ -11,7 +11,7 @@ from io import StringIO
 def create_aurora_alert_email(
     high_visibility_locations: List[Tuple[Dict[str, Any], float]]
 ) -> Tuple[str, str]:
-    """Create a beautifully formatted aurora alert email.
+    """Create a simple formatted aurora alert email.
 
     Args:
         high_visibility_locations: List of (location_dict, kp_value) tuples
@@ -111,7 +111,7 @@ def create_aurora_alert_email(
 def create_test_email(
     locations: List[Dict[str, Any]]
 ) -> Tuple[str, str]:
-    """Create a beautifully formatted test email.
+    """Create a simple formatted test email.
 
     Args:
         locations: List of location dictionaries

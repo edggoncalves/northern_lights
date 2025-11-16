@@ -1,11 +1,11 @@
 # Northern Lights
 
-Aurora Borealis visibility tracker with beautiful email notifications.
+Aurora Borealis visibility tracker with email notifications.
 
 ✨ **Features:**
 
 - 📍 Track aurora visibility at multiple locations
-- 📧 Beautiful HTML emails with Rich formatting
+- 📧 Simple HTML emails with basic formatting
 - ⚡ Configurable alert thresholds (HIGH/MODERATE/ALL)
 - 🔧 Easy configuration management
 
