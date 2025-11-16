@@ -6,7 +6,7 @@ Aurora Borealis visibility tracker with beautiful email notifications.
 
 - 📍 Track aurora visibility at multiple locations
 - 📧 Beautiful HTML emails with Rich formatting
-- ⚡ Automatic alerts when KP index ≥ 5
+- ⚡ Configurable alert thresholds (HIGH/MODERATE/ALL)
 - 🔧 Easy configuration management
 
 For complete documentation, see [CLAUDE.md](CLAUDE.md).

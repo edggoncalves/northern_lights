@@ -25,7 +25,7 @@ The project follows a modular structure with utility functions separated into th
 - **Modular structure**: Functions are organized by concern to avoid import issues and improve maintainability
 - **Configuration**: Stores multiple locations (city, country, lat/lng) and email recipients in `config.json` (gitignored). Supports monitoring multiple locations simultaneously.
 - **Email credentials**: Stored in `.env` file (gitignored) and loaded via python-dotenv
-- **Email notifications**: Only sent when KP index >= 5 (high visibility)
+- **Email notifications**: Configurable threshold (HIGH/MODERATE/ALL) determines when notifications are sent
 - **Error handling**: All external calls (geocoding, API, SMTP) have proper error handling with informative messages
 
 ## Development Commands
@@ -53,14 +53,18 @@ uv run python main.py list
 # Test email configuration (optional)
 uv run python main.py test-email
 
-# Check aurora visibility at all locations (sends email if KP >= 5 anywhere)
+# Check aurora visibility at all locations (sends email based on configured threshold)
 uv run python main.py check
+
+# Save raw API responses to a file for debugging or analysis
+uv run python main.py check --save-output aurora_data.json
 
 # Or activate the virtual environment first
 source .venv/bin/activate
 python main.py configure
 python main.py test-email
 python main.py check
+python main.py check --save-output aurora_data.json
 ```
 
 ### Configuration Options
@@ -70,16 +74,28 @@ The `configure` command provides an interactive menu to update settings individu
 1. **Locations** - Add, remove, or view monitoring locations (supports multiple)
 2. **Email recipients** - Add/change notification email addresses (supports multiple)
 3. **SMTP settings** - Configure email server credentials
-4. **All settings** - Complete reconfiguration
-5. **Exit** - Cancel changes
+4. **Notification threshold** - Set when to receive alerts (HIGH/MODERATE/ALL)
+5. **All settings** - Complete reconfiguration
+6. **Exit** - Cancel changes
 
 The `list` command displays your current configuration:
 
 - All configured locations with coordinates
 - All email recipients
 - SMTP configuration status
+- Current notification threshold setting
 
 This allows you to view or update individual settings without reconfiguring everything.
+
+### Notification Threshold
+
+You can configure when you want to receive email notifications by setting a threshold:
+
+- **HIGH** (default) - Only KP index >= 5 (best viewing conditions, less frequent alerts)
+- **MODERATE** - KP index >= 3 (good viewing conditions, more frequent alerts)
+- **ALL** - Any aurora activity detected (KP > 0, most frequent alerts)
+
+To change the threshold, run `python main.py configure` and select option 4 (Notification threshold).
 
 ### Email Notifications
 
@@ -99,6 +115,27 @@ SMTP credentials are stored in a `.env` file. If not configured yet, you can:
 
 If SMTP credentials are not configured, the script will print what the email would contain instead of sending it.
 
+### Saving API Responses
+
+The `check` command supports an optional `--save-output` flag to save raw API responses for debugging or analysis:
+
+```bash
+# Save API responses to a file
+uv run python main.py check --save-output aurora_data.json
+```
+
+When you have multiple locations configured:
+
+- Each location's API response is appended to the file
+- Responses include a header comment showing the coordinates
+- Data is formatted as indented JSON for readability
+
+This is useful for:
+
+- Debugging API response structures
+- Historical data analysis
+- Understanding KP index variations across locations
+
 ### Automated Checks with Cron
 
 To automatically check aurora visibility on a schedule (e.g., daily at 8 PM), set up a cronjob:
@@ -106,6 +143,9 @@ To automatically check aurora visibility on a schedule (e.g., daily at 8 PM), se
 ```bash
 # Example: Check daily at 8 PM
 0 20 * * * cd /path/to/northern_lights && /path/to/uv run python main.py check
+
+# Example: Check daily and save API responses for analysis
+0 20 * * * cd /path/to/northern_lights && /path/to/uv run python main.py check --save-output ~/aurora_log.json
 ```
 
 **Resources:**
@@ -119,12 +159,13 @@ To automatically check aurora visibility on a schedule (e.g., daily at 8 PM), se
 - **Geocoding User Agent**: Uses "northern-lights-tracker" as required by Nominatim terms of service
 - **Multiple Locations**: Monitor aurora visibility at multiple locations simultaneously (home, cabin, vacation spots, etc.)
 - **Multiple Recipients**: Sends notifications to multiple email addresses
-- **Smart Notifications**: Email sent if ANY monitored location has high visibility, listing all locations with KP >= 5
+- **Smart Notifications**: Email sent if ANY monitored location meets your configured threshold, listing all relevant locations
+- **Configurable Threshold**: Choose when to receive alerts (HIGH/MODERATE/ALL) based on KP index
 - **Backward Compatibility**: Automatically supports old config files with single location/email fields
 - **KP Index Thresholds**:
-  - KP >= 5: HIGH visibility (excellent chance) - **email notification sent**
-  - KP >= 3: MODERATE visibility (worth checking) - no notification
-  - KP < 3: LOW visibility - no notification
+  - **HIGH** (KP >= 5): Excellent viewing conditions - default notification threshold
+  - **MODERATE** (KP >= 3): Good viewing conditions - optional notification threshold
+  - **ALL** (KP > 0): Any aurora activity detected - optional notification threshold for enthusiasts
 - **Cron Setup**: The `check` command is designed to be run via cron/scheduler to automate daily checks
 
 ## Dependencies

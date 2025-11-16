@@ -9,6 +9,7 @@ from utils.config import (
     display_config_summary,
     manage_locations,
     manage_emails,
+    manage_notification_threshold,
     configure_smtp,
     setup_complete_config,
 )
@@ -32,15 +33,16 @@ def configure() -> None:
         config = load_config()
 
         print("\nWhat would you like to configure?")
-        print("  1. Location (city and country)")
+        print("  1. Locations (city and country)")
         print("  2. Email recipients")
-        print("  3. SMTP settings (email server)")
-        print("  4. All settings (complete reconfiguration)")
-        print("  5. Exit")
-        choice = input("\nEnter your choice (1-5): ").strip()
+        print("  3. Notification threshold (HIGH/MODERATE/ALL)")
+        print("  4. SMTP settings (email server)")
+        print("  5. All settings (complete reconfiguration)")
+        print("  6. Exit")
+        choice = input("\nEnter your choice (1-6): ").strip()
     else:
         print("No configuration file found. Let's create one!")
-        choice = "4"
+        choice = "5"
 
     if choice == "1":
         # Manage locations
@@ -51,14 +53,18 @@ def configure() -> None:
         manage_emails(config)
 
     elif choice == "3":
+        # Update notification threshold
+        manage_notification_threshold(config)
+
+    elif choice == "4":
         # Update SMTP settings only
         configure_smtp()
 
-    elif choice == "4":
+    elif choice == "5":
         # Complete reconfiguration
         setup_complete_config()
 
-    elif choice == "5":
+    elif choice == "6":
         print("Exiting.")
         return
 
@@ -167,6 +173,11 @@ def list_config() -> None:
     else:
         print("Email Recipients: (none configured)")
 
+    # Show notification threshold
+    print()
+    threshold = config.get("notification_threshold", "HIGH")
+    print(f"Notification Threshold: {threshold}")
+
     # Show SMTP status
     print()
     env_path = os.path.join(os.getcwd(), ".env")
@@ -178,8 +189,11 @@ def list_config() -> None:
     print()
 
 
-def check() -> None:
+def check(save_output: str = None) -> None:
     """Check aurora visibility and send notification if HIGH.
+
+    Args:
+        save_output: Optional path to save raw API responses
 
     Sends email if visibility is HIGH at any configured location.
     """
@@ -216,13 +230,32 @@ def check() -> None:
         )
         return
 
-    print(f"Checking aurora visibility for {len(locations)} location(s)...\n")
+    # Get notification threshold
+    threshold = config.get("notification_threshold", "HIGH")
 
-    high_visibility_locations: List[Tuple[Dict[str, Any], float]] = []
+    # Determine KP threshold based on setting
+    if threshold == "MODERATE":
+        kp_threshold = 3.0
+        threshold_desc = "KP >= 3.0"
+    elif threshold == "ALL":
+        kp_threshold = 0.0
+        threshold_desc = "KP > 0"
+    else:  # HIGH
+        kp_threshold = 5.0
+        threshold_desc = "KP >= 5.0"
+
+    print(
+        f"Checking aurora visibility for {len(locations)} location(s)...\n"
+        f"Notification threshold: {threshold} ({threshold_desc})\n"
+    )
+
+    notification_locations: List[Tuple[Dict[str, Any], float]] = []
 
     # Check each location
     for loc in locations:
-        data = fetch_aurora_data(loc["latitude"], loc["longitude"])
+        data = fetch_aurora_data(
+            loc["latitude"], loc["longitude"], save_output=save_output
+        )
 
         # Try to get KP index from API response
         kp_index = None
@@ -242,39 +275,44 @@ def check() -> None:
         location_name = f"{loc['city']}, {loc['country']}"
         if kp_value >= 5:
             print(f"✓ {location_name}: KP {kp_value} - HIGH visibility!")
-            high_visibility_locations.append((loc, kp_value))
+            if kp_value >= kp_threshold:
+                notification_locations.append((loc, kp_value))
         elif kp_value >= 3:
             print(f"○ {location_name}: KP {kp_value} - MODERATE visibility")
+            if kp_value >= kp_threshold:
+                notification_locations.append((loc, kp_value))
         else:
             print(f"  {location_name}: KP {kp_value} - LOW visibility")
+            if kp_value > 0 and kp_value >= kp_threshold:
+                notification_locations.append((loc, kp_value))
 
-    # Send notification if any location has high visibility
-    if high_visibility_locations:
+    # Send notification if any location meets threshold
+    if notification_locations:
         print(f"\nSending notification to {len(emails)} recipient(s)...")
 
         # Generate formatted email
         plain_body, html_body = create_aurora_alert_email(
-            high_visibility_locations
+            notification_locations
         )
 
         # Create subject line
-        if len(high_visibility_locations) == 1:
-            loc, kp = high_visibility_locations[0]
-            subject = f"Aurora Alert: HIGH visibility at {loc['city']}"
+        if len(notification_locations) == 1:
+            loc, kp = notification_locations[0]
+            subject = f"Aurora Alert: Visibility at {loc['city']}"
         else:
-            num_locs = len(high_visibility_locations)
+            num_locs = len(notification_locations)
             subject = (
-                f"Aurora Alert: HIGH visibility at "
+                f"Aurora Alert: Visibility at "
                 f"{num_locs} location(s)"
             )
 
         for email in emails:
             send_email(email, subject, plain_body, html_body)
 
-        num_notified = len(high_visibility_locations)
+        num_notified = len(notification_locations)
         print(f"Notification sent for {num_notified} location(s)!")
     else:
         print(
-            "\nNo high visibility at any location "
-            "(notification threshold: KP >= 5.0)"
+            f"\nNo locations meet notification threshold "
+            f"({threshold_desc})"
         )

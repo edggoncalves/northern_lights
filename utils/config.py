@@ -36,6 +36,16 @@ def validate_config(config: Dict[str, Any]) -> List[str]:
     """
     errors = []
 
+    # Check notification threshold
+    if "notification_threshold" in config:
+        threshold = config["notification_threshold"]
+        valid_thresholds = ["HIGH", "MODERATE", "ALL"]
+        if threshold not in valid_thresholds:
+            errors.append(
+                f"notification_threshold must be one of: "
+                f"{', '.join(valid_thresholds)}"
+            )
+
     # Check for locations (new format) or city/country (old format)
     if "locations" in config:
         if not isinstance(config["locations"], list):
@@ -328,6 +338,46 @@ def manage_emails(config: Dict[str, Any]) -> None:
     print(f"\nEmail recipients updated: {', '.join(emails)}")
 
 
+def manage_notification_threshold(config: Dict[str, Any]) -> None:
+    """Interactive notification threshold management.
+
+    Args:
+        config: Configuration dictionary to modify
+    """
+    current = config.get("notification_threshold", "HIGH")
+
+    print("\n=== Notification Threshold ===")
+    print(f"Current setting: {current}")
+    print("\nAvailable options:")
+    print("  1. HIGH - Only KP index >= 5 (best viewing conditions)")
+    print("  2. MODERATE - KP index >= 3 (good viewing conditions)")
+    print("  3. ALL - Any aurora activity detected (KP > 0)")
+    print()
+
+    choice = input(
+        "Select threshold (1-3) or press Enter to keep current: "
+    ).strip()
+
+    if choice == "1":
+        config["notification_threshold"] = "HIGH"
+        print("\nNotification threshold set to HIGH (KP >= 5)")
+    elif choice == "2":
+        config["notification_threshold"] = "MODERATE"
+        print("\nNotification threshold set to MODERATE (KP >= 3)")
+    elif choice == "3":
+        config["notification_threshold"] = "ALL"
+        print("\nNotification threshold set to ALL (KP > 0)")
+    elif choice == "":
+        print(f"\nKeeping current threshold: {current}")
+        return
+    else:
+        print("\nInvalid choice. Keeping current threshold.")
+        return
+
+    save_config(config)
+    print("Configuration saved!")
+
+
 def configure_smtp() -> None:
     """Configure SMTP settings and save to .env file.
 
@@ -414,6 +464,22 @@ def setup_complete_config() -> Dict[str, Any]:
         break
 
     config["emails"] = emails
+
+    # Set notification threshold
+    print("\n=== Notification Threshold ===")
+    print("When should you receive alerts?")
+    print("  1. HIGH - Only KP >= 5 (best viewing, less frequent)")
+    print("  2. MODERATE - KP >= 3 (good viewing, more frequent)")
+    print("  3. ALL - Any activity (KP > 0, most frequent)")
+    print()
+    threshold_choice = input("Select (1-3, default is HIGH): ").strip()
+
+    if threshold_choice == "2":
+        config["notification_threshold"] = "MODERATE"
+    elif threshold_choice == "3":
+        config["notification_threshold"] = "ALL"
+    else:
+        config["notification_threshold"] = "HIGH"
 
     save_config(config)
 
