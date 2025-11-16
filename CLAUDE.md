@@ -156,6 +156,7 @@ To automatically check aurora visibility on a schedule (e.g., daily at 8 PM), se
 ## Implementation Notes
 
 - **API Endpoint**: The Auroras.live API endpoint (`http://api.auroras.live/v1/`) uses HTTP, not HTTPS
+- **API Data Limitation**: Due to changes at the Space Weather Prediction Centre, the Auroras.live API currently returns current KP values instead of 1-hour and 4-hour forecasts. This affects all API responses regardless of forecast parameters. This is a temporary upstream limitation that will be resolved when alternate data sources become available.
 - **Geocoding User Agent**: Uses "northern-lights-tracker" as required by Nominatim terms of service
 - **Multiple Locations**: Monitor aurora visibility at multiple locations simultaneously (home, cabin, vacation spots, etc.)
 - **Multiple Recipients**: Sends notifications to multiple email addresses
